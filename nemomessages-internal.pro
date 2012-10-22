@@ -7,11 +7,13 @@ PKGCONFIG += commhistory TelepathyQt4
 SOURCES += plugin.cpp \
     src/accountsmodel.cpp \
     src/conversationchannel.cpp \
-    src/groupmanager.cpp
+    src/groupmanager.cpp \
+    src/clienthandler.cpp
 
 HEADERS += src/accountsmodel.h \
     src/conversationchannel.h \
-    src/groupmanager.h
+    src/groupmanager.h \
+    src/clienthandler.h
 
 # do not edit below here, move this to a shared .pri?
 TEMPLATE = lib

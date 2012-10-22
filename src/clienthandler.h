@@ -1,10 +1,8 @@
-/*
- * Copyright (C) 2012 Jolla Ltd.
- * Contact: John Brooks <john.brooks@jollamobile.com>
+/* Copyright (C) 2012 John Brooks <john.brooks@dereferenced.net>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
- * "Redistribution and use in source and binary forms, with or without
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
  *   * Redistributions of source code must retain the above copyright
@@ -27,40 +25,37 @@
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <QtGlobal>
-#include <QtDeclarative>
-#include <QDeclarativeEngine>
-#include <QDeclarativeExtensionPlugin>
+#ifndef CLIENTHANDLER_H
+#define CLIENTHANDLER_H
 
-#include "src/accountsmodel.h"
-#include "src/conversationchannel.h"
-#include "src/groupmanager.h"
-#include "src/clienthandler.h"
+#include <QObject>
+#include <TelepathyQt/AbstractClientHandler>
+#include <TelepathyQt/PendingChannelRequest>
 
-class Q_DECL_EXPORT NemoMessagesPlugin : public QDeclarativeExtensionPlugin
+class ConversationChannel;
+
+class ClientHandler : public QObject, public Tp::AbstractClientHandler
 {
+    Q_OBJECT
+
 public:
-    virtual ~NemoMessagesPlugin() { }
+    ClientHandler();
+    virtual ~ClientHandler();
 
-    void initializeEngine(QDeclarativeEngine *engine, const char *uri)
-    {
-        Q_ASSERT(uri == QLatin1String("org.nemomobile.messages.internal"));
-    }
+    static ClientHandler *instance();
 
-    void registerTypes(const char *uri)
-    {
-        Q_ASSERT(uri == QLatin1String("org.nemomobile.messages.internal"));
+    virtual bool bypassApproval() const;
+    virtual void handleChannels(const Tp::MethodInvocationContextPtr<> &context, const Tp::AccountPtr &account,
+                                const Tp::ConnectionPtr &connection, const QList<Tp::ChannelPtr> &channels,
+                                const QList<Tp::ChannelRequestPtr> &requestsSatisfied, const QDateTime &userActionTime,
+                                const HandlerInfo &handlerInfo);
 
-        qmlRegisterType<AccountsModel>(uri, 1, 0, "TelepathyAccountsModel");
-        qmlRegisterUncreatableType<ConversationChannel>(uri, 1, 0, "ConversationChannel",
-                QLatin1String("Must be created via GroupManager"));
-        qmlRegisterType<GroupManager>(uri, 1, 0, "GroupManager");
-        qmlRegisterType<ClientHandler>(uri, 1, 0, "TelepathyClientHandler");
-    }
+private:
+    Tp::ClientRegistrarPtr registrar;
 };
 
-Q_EXPORT_PLUGIN2(nemomessages, NemoMessagesPlugin);
+#endif
 
