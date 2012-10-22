@@ -1,10 +1,8 @@
-/*
- * Copyright (C) 2012 Jolla Ltd.
- * Contact: John Brooks <john.brooks@jollamobile.com>
+/* Copyright (C) 2012 John Brooks <john.brooks@dereferenced.net>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
- * "Redistribution and use in source and binary forms, with or without
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
  *   * Redistributions of source code must retain the above copyright
@@ -27,38 +25,57 @@
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <QtGlobal>
-#include <QtDeclarative>
-#include <QDeclarativeEngine>
-#include <QDeclarativeExtensionPlugin>
+#ifndef ACCOUNTSMODEL_H
+#define ACCOUNTSMODEL_H
 
-#include "src/accountsmodel.h"
-#include "src/conversationchannel.h"
-#include "src/groupmanager.h"
+#include <QAbstractListModel>
+#include <TelepathyQt/Types>
+#include <TelepathyQt/AccountManager>
 
-class Q_DECL_EXPORT NemoMessagesPlugin : public QDeclarativeExtensionPlugin
+class ConversationChannel;
+
+class AccountsModel : public QAbstractListModel
 {
+    Q_OBJECT
+    Q_ENUMS(Roles)
+
+    // Hack necessary for SelectionDialog in AccountSelector.qml.
+    // The Qt Components dialog expects the model to have a count
+    // property, and won't show any items if it doesn't.
+    Q_PROPERTY(int count READ count NOTIFY countChanged);
+
 public:
-    virtual ~NemoMessagesPlugin() { }
+    enum Roles {
+        AccountPtrRole = Qt::UserRole,
+        AccountUidRole
+    };
 
-    void initializeEngine(QDeclarativeEngine *engine, const char *uri)
+    AccountsModel(QObject *parent = 0);
+
+    virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
+    virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
+
+    Q_INVOKABLE QVariant get(int row, int role = Qt::DisplayRole) const
     {
-        Q_ASSERT(uri == QLatin1String("org.nemomobile.messages"));
+        return data(index(row, 0), role);
     }
 
-    void registerTypes(const char *uri)
-    {
-        Q_ASSERT(uri == QLatin1String("org.nemomobile.messages"));
+    int count() const { return rowCount(); }
 
-        qmlRegisterType<AccountsModel>(uri, 1, 0, "TelepathyAccountsModel");
-        qmlRegisterUncreatableType<ConversationChannel>(uri, 1, 0, "ConversationChannel",
-                QLatin1String("Must be created via GroupManager"));
-        qmlRegisterType<GroupManager>(uri, 1, 0, "GroupManager");
-    }
+signals:
+    void countChanged();
+
+private slots:
+    void accountManagerReady(Tp::PendingOperation *op);
+    void newAccount(const Tp::AccountPtr &account);
+
+private:
+    Tp::AccountManagerPtr mAccountManager;
+    QList<Tp::AccountPtr> mAccounts;
 };
 
-Q_EXPORT_PLUGIN2(nemomessages, NemoMessagesPlugin);
+#endif
 
