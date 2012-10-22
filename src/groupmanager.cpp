@@ -33,16 +33,19 @@
 #include <QThread>
 #include <CommHistory/GroupModel>
 
-Q_GLOBAL_STATIC(GroupManager, gmInstance)
+static QPointer<GroupManager> gmInstance;
 
 GroupManager *GroupManager::instance()
 {
-    return gmInstance();
+    return gmInstance.isNull() ? (new GroupManager) : gmInstance.data(); 
 }
 
 GroupManager::GroupManager(QObject *parent)
     : QObject(parent)
 {
+    if (gmInstance.isNull())
+        gmInstance = this;
+
     QThread *modelThread = new QThread(this);
     modelThread->start();
 

@@ -41,14 +41,9 @@
 
 using namespace Tp;
 
-ClientHandler *clientHandler = 0;
-
 ClientHandler::ClientHandler()
-    : AbstractClientHandler(ChannelClassSpec::textChat())
+    : AbstractClientHandler(ChannelClassSpec::textChat()), manager(0)
 {
-    Q_ASSERT(!clientHandler);
-    clientHandler = this;
-
     const QDBusConnection &dbus = QDBusConnection::sessionBus();
     registrar = ClientRegistrar::create(dbus);
     AbstractClientPtr handler = AbstractClientPtr(this);
@@ -57,13 +52,11 @@ ClientHandler::ClientHandler()
 
 ClientHandler::~ClientHandler()
 {
-    clientHandler = 0;
 }
 
-ClientHandler *ClientHandler::instance()
+void ClientHandler::setGroupManager(GroupManager *g)
 {
-    Q_ASSERT(clientHandler);
-    return clientHandler;
+    manager = g;
 }
 
 bool ClientHandler::bypassApproval() const
@@ -76,6 +69,12 @@ void ClientHandler::handleChannels(const MethodInvocationContextPtr<> &context, 
                                    const QList<ChannelRequestPtr> &requestsSatisfied, const QDateTime &userActionTime,
                                    const HandlerInfo &handlerInfo)
 {
+    if (!manager) {
+        qWarning() << "handleChannels has no group manager instance";
+        context->setFinished();
+        return;
+    }
+
     foreach (const ChannelPtr &channel, channels) {
         QVariantMap properties = channel->immutableProperties();
         QString targetId = properties.value(TP_QT_IFACE_CHANNEL + QLatin1String(".TargetID")).toString();
@@ -85,7 +84,7 @@ void ClientHandler::handleChannels(const MethodInvocationContextPtr<> &context, 
             continue;
         }
 
-        ConversationChannel *g = GroupManager::instance()->getConversation(account->objectPath(), targetId);
+        ConversationChannel *g = manager->getConversation(account->objectPath(), targetId);
         if (!g) {
             qWarning() << "handleChannels cannot create ConversationChannel";
             continue;
