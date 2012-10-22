@@ -46,12 +46,12 @@ public:
 
     void initializeEngine(QDeclarativeEngine *engine, const char *uri)
     {
-        Q_ASSERT(uri == QLatin1String("org.nemomobile.messages"));
+        Q_ASSERT(uri == QLatin1String("org.nemomobile.messages.internal"));
     }
 
     void registerTypes(const char *uri)
     {
-        Q_ASSERT(uri == QLatin1String("org.nemomobile.messages"));
+        Q_ASSERT(uri == QLatin1String("org.nemomobile.messages.internal"));
 
         qmlRegisterType<AccountsModel>(uri, 1, 0, "TelepathyAccountsModel");
         qmlRegisterUncreatableType<ConversationChannel>(uri, 1, 0, "ConversationChannel",

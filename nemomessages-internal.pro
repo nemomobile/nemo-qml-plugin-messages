@@ -1,5 +1,5 @@
-TARGET = nemomessages
-PLUGIN_IMPORT_PATH = org/nemomobile/messages
+TARGET = nemomessages-internal
+PLUGIN_IMPORT_PATH = org/nemomobile/messages/internal
 
 CONFIG += link_pkgconfig
 PKGCONFIG += commhistory TelepathyQt4
