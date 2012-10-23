@@ -1,10 +1,10 @@
-/*
+/* Copyright (C) 2012 John Brooks <john.brooks@dereferenced.net>
  * Copyright (C) 2012 Jolla Ltd.
  * Contact: John Brooks <john.brooks@jollamobile.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
- * "Redistribution and use in source and binary forms, with or without
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
  *   * Redistributions of source code must retain the above copyright
@@ -27,42 +27,38 @@
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <QtGlobal>
-#include <QtDeclarative>
-#include <QDeclarativeEngine>
-#include <QDeclarativeExtensionPlugin>
+#include "messagescontextprovider.h"
+#include <ContextProvider>
 
-#include "src/accountsmodel.h"
-#include "src/conversationchannel.h"
-#include "src/groupmanager.h"
-#include "src/clienthandler.h"
-#include "src/messagescontextprovider.h"
+#include <CommHistory/Group>
 
-class Q_DECL_EXPORT NemoMessagesPlugin : public QDeclarativeExtensionPlugin
+MessagesContextProvider::MessagesContextProvider(QObject *parent)
+    : QObject(parent), mCurrentConversation(0)
 {
-public:
-    virtual ~NemoMessagesPlugin() { }
+    ContextProvider::Service *cpService = new ContextProvider::Service(QDBusConnection::SessionBus,
+            "org.nemomobile.qmlmessages.context", this);
+    propObservedConversation = new ContextProvider::Property(*cpService, "Messaging.ObservedConversation",
+            this);
+    if (propObservedConversation && propObservedConversation->isSet())
+        propObservedConversation->unsetValue();
+}
 
-    void initializeEngine(QDeclarativeEngine *engine, const char *uri)
-    {
-        Q_ASSERT(uri == QLatin1String("org.nemomobile.messages.internal"));
-    }
+void MessagesContextProvider::updateCurrentConversation(ConversationChannel *c)
+{
+    if (c == mCurrentConversation)
+        return;
 
-    void registerTypes(const char *uri)
-    {
-        Q_ASSERT(uri == QLatin1String("org.nemomobile.messages.internal"));
+    mCurrentConversation = c;
+    emit currentConversationChanged(c);
 
-        qmlRegisterType<AccountsModel>(uri, 1, 0, "TelepathyAccountsModel");
-        qmlRegisterUncreatableType<ConversationChannel>(uri, 1, 0, "ConversationChannel",
-                QLatin1String("Must be created via GroupManager"));
-        qmlRegisterType<GroupManager>(uri, 1, 0, "GroupManager");
-        qmlRegisterType<ClientHandler>(uri, 1, 0, "TelepathyClientHandler");
-        qmlRegisterType<MessagesContextProvider>(uri, 1, 0, "MessagesContextProvider");
-    }
-};
-
-Q_EXPORT_PLUGIN2(nemomessages, NemoMessagesPlugin);
+    if (c) {
+        QVariantList observed;
+        observed << c->localUid() << c->contactId() << CommHistory::Group::ChatTypeP2P;
+        propObservedConversation->setValue(observed);
+    } else
+        propObservedConversation->unsetValue();
+}
 

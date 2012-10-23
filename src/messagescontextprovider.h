@@ -1,10 +1,11 @@
 /*
+ * Copyright (C) 2012 John Brooks <john.brooks@dereferenced.net>
  * Copyright (C) 2012 Jolla Ltd.
  * Contact: John Brooks <john.brooks@jollamobile.com>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
- * "Redistribution and use in source and binary forms, with or without
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
  *   * Redistributions of source code must retain the above copyright
@@ -27,42 +28,45 @@
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <QtGlobal>
-#include <QtDeclarative>
-#include <QDeclarativeEngine>
-#include <QDeclarativeExtensionPlugin>
+#ifndef MESSAGESCONTEXTPROVIDER_H
+#define MESSAGESCONTEXTPROVIDER_H
 
-#include "src/accountsmodel.h"
-#include "src/conversationchannel.h"
-#include "src/groupmanager.h"
-#include "src/clienthandler.h"
-#include "src/messagescontextprovider.h"
+#include <QObject>
+#include "conversationchannel.h"
 
-class Q_DECL_EXPORT NemoMessagesPlugin : public QDeclarativeExtensionPlugin
+namespace ContextProvider {
+    class Property;
+}
+
+/* commhistory-daemon uses contextkit properties to detect the currently visible
+ * conversation and prevent notifications. This class should be updated whenever
+ * the actively visible conversation changes, including when minimized.
+ *
+ * This could ideally be replaced with a generic context provider API, but there
+ * are complications due to the types used here. */
+class MessagesContextProvider : public QObject
 {
+    Q_OBJECT
+
 public:
-    virtual ~NemoMessagesPlugin() { }
+    explicit MessagesContextProvider(QObject *parent = 0);
 
-    void initializeEngine(QDeclarativeEngine *engine, const char *uri)
-    {
-        Q_ASSERT(uri == QLatin1String("org.nemomobile.messages.internal"));
-    }
+    Q_PROPERTY(ConversationChannel* currentConversation READ currentConversation WRITE updateCurrentConversation NOTIFY currentConversationChanged)
+    ConversationChannel *currentConversation() const { return mCurrentConversation; }
 
-    void registerTypes(const char *uri)
-    {
-        Q_ASSERT(uri == QLatin1String("org.nemomobile.messages.internal"));
+public slots:
+    void updateCurrentConversation(ConversationChannel *c);
 
-        qmlRegisterType<AccountsModel>(uri, 1, 0, "TelepathyAccountsModel");
-        qmlRegisterUncreatableType<ConversationChannel>(uri, 1, 0, "ConversationChannel",
-                QLatin1String("Must be created via GroupManager"));
-        qmlRegisterType<GroupManager>(uri, 1, 0, "GroupManager");
-        qmlRegisterType<ClientHandler>(uri, 1, 0, "TelepathyClientHandler");
-        qmlRegisterType<MessagesContextProvider>(uri, 1, 0, "MessagesContextProvider");
-    }
+signals:
+    void currentConversationChanged(ConversationChannel *current);
+
+private:
+    ConversationChannel *mCurrentConversation;
+    ContextProvider::Property *propObservedConversation;
 };
 
-Q_EXPORT_PLUGIN2(nemomessages, NemoMessagesPlugin);
+#endif
 
