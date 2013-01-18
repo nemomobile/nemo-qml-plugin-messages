@@ -53,6 +53,9 @@ public:
     Q_PROPERTY(QObject* groupModel READ groupModel CONSTANT)
     CommHistory::GroupModel *groupModel() const { return mGroupModel; }
 
+    Q_PROPERTY(bool ready READ isReady NOTIFY readyChanged)
+    bool isReady() const { return mGroupModel->isReady(); }
+
     /* Get a conversation by commhistory group ID, creating it if necessary.
      * A telepathy channel will be established if none exists already. */
     Q_INVOKABLE ConversationChannel *getConversationById(int groupid);
@@ -63,6 +66,9 @@ public:
 
     CommHistory::Group groupFromUid(const QString &localUid, const QString &remoteUid);
     CommHistory::Group groupFromId(int groupid);
+
+signals:
+    void readyChanged();
 
 private slots:
     void groupDestroyed(QObject *obj);

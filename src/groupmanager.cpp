@@ -50,6 +50,7 @@ GroupManager::GroupManager(QObject *parent)
     modelThread->start();
 
     mGroupModel = new CommHistory::GroupModel(this);
+    connect(mGroupModel, SIGNAL(modelReady(bool)), SIGNAL(readyChanged()));
     mGroupModel->setBackgroundThread(modelThread);
     mGroupModel->getGroups();
 }
