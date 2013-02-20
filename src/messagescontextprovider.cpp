@@ -56,7 +56,7 @@ void MessagesContextProvider::updateCurrentConversation(ConversationChannel *c)
 
     if (c) {
         QVariantList observed;
-        observed << c->localUid() << c->contactId() << CommHistory::Group::ChatTypeP2P;
+        observed << c->localUid() << c->remoteUid() << CommHistory::Group::ChatTypeP2P;
         propObservedConversation->setValue(observed);
     } else
         propObservedConversation->unsetValue();

@@ -1,4 +1,5 @@
-/* Copyright (C) 2012 John Brooks <john.brooks@dereferenced.net>
+/* Copyright (C) 2013 Jolla Ltd
+ * Copyright (C) 2012 John Brooks <john.brooks@dereferenced.net>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -37,31 +38,16 @@
 #include <TelepathyQt/Channel>
 #include <TelepathyQt/PendingSendMessage>
 #include <TelepathyQt/ReceivedMessage>
-#include <CommHistory/Group>
-#include <CommHistory/ConversationModel>
 
-/* ConversationChannel handles the relationship between a commhistory
- * group and the associated Telepathy channel.
- *
- * setGroup associates the instance with a commhistory group, either by
- * groupId or the combination of localUid and remoteUid. When using
- * UIDs, if the group does not exist, it will be created immediately.
- *
- * A text channel and ConversationModel will be automatically established.
- */
+/* ConversationChannel represents a telepathy channel for QML. */
 class ConversationChannel : public QObject
 {
     Q_OBJECT
     Q_ENUMS(State)
    
     Q_PROPERTY(State state READ state NOTIFY stateChanged)
-    Q_PROPERTY(QString contactId READ contactId NOTIFY contactIdChanged)
     Q_PROPERTY(QString localUid READ localUid CONSTANT)
-    Q_PROPERTY(int groupId READ groupId CONSTANT)
-
-    Q_PROPERTY(QObject* model READ model NOTIFY chatModelReady)
-
-    friend class GroupManager;
+    Q_PROPERTY(QString remoteUid READ remoteUid CONSTANT)
 
 public:
     enum State {
@@ -73,13 +59,12 @@ public:
         Error
     };
 
+    ConversationChannel(const QString &localUid, const QString &remoteUid, QObject *parent = 0);
     virtual ~ConversationChannel();
 
     State state() const { return mState; }
-    QString contactId() const { return mContactId; }
     QString localUid() const { return mLocalUid; }
-    int groupId() const { return mGroupId; }
-    QObject *model() const { return mModel; }
+    QString remoteUid() const { return mRemoteUid; }
 
     Q_INVOKABLE void ensureChannel();
     void setChannel(const Tp::ChannelPtr &channel);
@@ -89,9 +74,6 @@ public slots:
 
 signals:
     void stateChanged(int newState);
-    void chatModelReady(QObject *model);
-    void contactIdChanged();
-
     void requestSucceeded();
     void requestFailed(const QString &errorName, const QString &errorMessage);
 
@@ -112,22 +94,14 @@ private:
     Tp::ChannelPtr mChannel;
     Tp::AccountPtr mAccount;
     State mState;
-    CommHistory::ConversationModel *mModel;
 
-    int mGroupId;
-    QString mContactId;
     QString mLocalUid;
+    QString mRemoteUid;
 
     QList<QString> mPendingMessages;
 
-    ConversationChannel(QObject *parent = 0);
-
     void setState(State newState);
     void start(Tp::PendingChannelRequest *request);
-
-    /* Set commhistory group by ID. Group must exist in the GroupModel. */
-    void setGroup(int groupid);
-    void setupGroup(const CommHistory::Group &group);
 };
 
 #endif

@@ -37,7 +37,6 @@
 
 #include "src/accountsmodel.h"
 #include "src/conversationchannel.h"
-#include "src/groupmanager.h"
 #include "src/clienthandler.h"
 #include "src/messagescontextprovider.h"
 
@@ -57,9 +56,8 @@ public:
 
         qmlRegisterType<AccountsModel>(uri, 1, 0, "TelepathyAccountsModel");
         qmlRegisterUncreatableType<ConversationChannel>(uri, 1, 0, "ConversationChannel",
-                QLatin1String("Must be created via GroupManager"));
-        qmlRegisterType<GroupManager>(uri, 1, 0, "GroupManager");
-        qmlRegisterType<ClientHandler>(uri, 1, 0, "TelepathyClientHandler");
+                QLatin1String("Must be created via TelepathyChannelManager"));
+        qmlRegisterType<ClientHandler>(uri, 1, 0, "TelepathyChannelManager");
         qmlRegisterType<MessagesContextProvider>(uri, 1, 0, "MessagesContextProvider");
     }
 };

@@ -34,6 +34,7 @@
 #include <QObject>
 #include <TelepathyQt/AbstractClientHandler>
 #include <TelepathyQt/PendingChannelRequest>
+#include "conversationchannel.h"
 
 class GroupManager;
 
@@ -45,19 +46,19 @@ public:
     ClientHandler();
     virtual ~ClientHandler();
 
-    Q_PROPERTY(GroupManager* groupManager READ groupManager WRITE setGroupManager)
-    GroupManager *groupManager() const { return manager; }
-    void setGroupManager(GroupManager *g);
+    Q_INVOKABLE ConversationChannel *getConversation(const QString &localUid, const QString &remoteUid);
 
     virtual bool bypassApproval() const;
     virtual void handleChannels(const Tp::MethodInvocationContextPtr<> &context, const Tp::AccountPtr &account,
                                 const Tp::ConnectionPtr &connection, const QList<Tp::ChannelPtr> &channels,
                                 const QList<Tp::ChannelRequestPtr> &requestsSatisfied, const QDateTime &userActionTime,
                                 const HandlerInfo &handlerInfo);
+private slots:
+    void channelDestroyed(QObject *obj);
 
 private:
     Tp::ClientRegistrarPtr registrar;
-    GroupManager *manager;
+    QList<ConversationChannel*> channels;
 };
 
 #endif

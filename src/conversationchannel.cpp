@@ -1,4 +1,5 @@
-/* Copyright (C) 2012 John Brooks <john.brooks@dereferenced.net>
+/* Copyright (C) 2013 Jolla Ltd
+ * Copyright (C) 2012 John Brooks <john.brooks@dereferenced.net>
  *
  * You may use this file under the terms of the BSD license as follows:
  *
@@ -29,7 +30,6 @@
  */
 
 #include "conversationchannel.h"
-#include "groupmanager.h"
 #include "clienthandler.h"
 
 #include <TelepathyQt/ChannelRequest>
@@ -39,11 +39,8 @@
 #include <TelepathyQt/Contact>
 #include <TelepathyQt/Account>
 
-#include <CommHistory/ConversationModel>
-#include <CommHistory/GroupModel>
-
-ConversationChannel::ConversationChannel(QObject *parent)
-    : QObject(parent), mPendingRequest(0), mState(Null), mModel(0), mGroupId(-1)
+ConversationChannel::ConversationChannel(const QString &localUid, const QString &remoteUid, QObject *parent)
+    : QObject(parent), mPendingRequest(0), mState(Null), mLocalUid(localUid), mRemoteUid(remoteUid)
 {
 }
 
@@ -51,42 +48,11 @@ ConversationChannel::~ConversationChannel()
 {
 }
 
-void ConversationChannel::setGroup(int groupid)
-{
-    CommHistory::Group group = GroupManager::instance()->groupFromId(groupid);
-    if (!group.isValid()) {
-        qWarning() << Q_FUNC_INFO << "Cannot find group id" << groupid;
-        return;
-    }
-
-    setupGroup(group);
-}
-
-void ConversationChannel::setupGroup(const CommHistory::Group &group)
-{
-    mGroupId = group.id();
-
-    mContactId = group.remoteUids().value(0);
-    mLocalUid = group.localUid();
-    emit contactIdChanged();
-
-    Q_ASSERT(!mModel);
-    mModel = new CommHistory::ConversationModel(this);
-    mModel->setBackgroundThread(GroupManager::instance()->groupModel()->backgroundThread());
-    mModel->setQueryMode(CommHistory::EventModel::StreamedAsyncQuery);
-    mModel->setFirstChunkSize(25);
-    mModel->setChunkSize(50);
-    mModel->setTreeMode(false);
-    mModel->getEvents(mGroupId);
-    emit chatModelReady(mModel);
-}
-
 void ConversationChannel::ensureChannel()
 {
     if (!mChannel.isNull() || mPendingRequest || !mRequest.isNull())
         return;
 
-    // XXX wait for account manager if necessary?
     mAccount = Tp::Account::create(TP_QT_ACCOUNT_MANAGER_BUS_NAME, mLocalUid);
     if (!mAccount) {
         qWarning() << "ConversationChannel::ensureChannel no account for" << mLocalUid;
@@ -110,7 +76,7 @@ void ConversationChannel::accountReadyForChannel(Tp::PendingOperation *op)
         return;
     }
 
-    Tp::PendingChannelRequest *req = mAccount->ensureTextChat(mContactId,
+    Tp::PendingChannelRequest *req = mAccount->ensureTextChat(mRemoteUid,
             QDateTime::currentDateTime(),
             QLatin1String("org.freedesktop.Telepathy.Client.qmlmessages"));
     start(req);

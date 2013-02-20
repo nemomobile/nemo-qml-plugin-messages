@@ -30,7 +30,6 @@
 
 #include "clienthandler.h"
 #include "conversationchannel.h"
-#include "groupmanager.h"
 
 #include <TelepathyQt/ChannelClassSpec>
 #include <TelepathyQt/ReceivedMessage>
@@ -42,7 +41,7 @@
 using namespace Tp;
 
 ClientHandler::ClientHandler()
-    : AbstractClientHandler(ChannelClassSpec::textChat()), manager(0)
+    : AbstractClientHandler(ChannelClassSpec::textChat())
 {
     const QDBusConnection &dbus = QDBusConnection::sessionBus();
     registrar = ClientRegistrar::create(dbus);
@@ -54,9 +53,23 @@ ClientHandler::~ClientHandler()
 {
 }
 
-void ClientHandler::setGroupManager(GroupManager *g)
+ConversationChannel *ClientHandler::getConversation(const QString &localUid, const QString &remoteUid)
 {
-    manager = g;
+    foreach (ConversationChannel *channel, channels) {
+        if (channel->localUid() == localUid && channel->remoteUid() == remoteUid)
+            return channel;
+    }
+
+    ConversationChannel *channel = new ConversationChannel(localUid, remoteUid, this);
+    connect(channel, SIGNAL(destroyed(QObject*)), SLOT(channelDestroyed(QObject*)));
+    channels.append(channel);
+
+    return channel;
+}
+
+void ClientHandler::channelDestroyed(QObject *obj)
+{
+    channels.removeOne(static_cast<ConversationChannel*>(obj));
 }
 
 bool ClientHandler::bypassApproval() const
@@ -69,11 +82,10 @@ void ClientHandler::handleChannels(const MethodInvocationContextPtr<> &context, 
                                    const QList<ChannelRequestPtr> &requestsSatisfied, const QDateTime &userActionTime,
                                    const HandlerInfo &handlerInfo)
 {
-    if (!manager) {
-        qWarning() << "handleChannels has no group manager instance";
-        context->setFinished();
-        return;
-    }
+    Q_UNUSED(connection);
+    Q_UNUSED(requestsSatisfied);
+    Q_UNUSED(userActionTime);
+    Q_UNUSED(handlerInfo);
 
     foreach (const ChannelPtr &channel, channels) {
         QVariantMap properties = channel->immutableProperties();
@@ -84,13 +96,13 @@ void ClientHandler::handleChannels(const MethodInvocationContextPtr<> &context, 
             continue;
         }
 
-        ConversationChannel *g = manager->getConversation(account->objectPath(), targetId);
-        if (!g) {
+        ConversationChannel *c = getConversation(account->objectPath(), targetId);
+        if (!c) {
             qWarning() << "handleChannels cannot create ConversationChannel";
             continue;
         }
 
-        g->setChannel(channel);
+        c->setChannel(channel);
     }
 
     context->setFinished();

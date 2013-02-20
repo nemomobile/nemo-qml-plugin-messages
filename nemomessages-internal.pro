@@ -7,13 +7,11 @@ PKGCONFIG += commhistory TelepathyQt4 contextprovider-1.0
 SOURCES += plugin.cpp \
     src/accountsmodel.cpp \
     src/conversationchannel.cpp \
-    src/groupmanager.cpp \
     src/clienthandler.cpp \
     src/messagescontextprovider.cpp
 
 HEADERS += src/accountsmodel.h \
     src/conversationchannel.h \
-    src/groupmanager.h \
     src/clienthandler.h \
     src/messagescontextprovider.h
 
