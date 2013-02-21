@@ -40,7 +40,7 @@
 Q_DECLARE_METATYPE(Tp::AccountPtr)
 
 AccountsModel::AccountsModel(QObject *parent)
-    : QAbstractListModel(parent)
+    : QAbstractListModel(parent), mReady(false)
 {
     QHash<int,QByteArray> roles;
     roles[Qt::DisplayRole] = "name";
@@ -58,6 +58,8 @@ void AccountsModel::accountManagerReady(Tp::PendingOperation *op)
 {
     foreach (const Tp::AccountPtr &account, mAccountManager->allAccounts())
         newAccount(account);
+    mReady = true;
+    emit readyChanged();
 }
 
 void AccountsModel::newAccount(const Tp::AccountPtr &account)
@@ -67,6 +69,16 @@ void AccountsModel::newAccount(const Tp::AccountPtr &account)
     mAccounts.append(account);
     endInsertRows();
     emit countChanged();
+}
+
+int AccountsModel::indexOfAccount(const QString &localUid) const
+{
+    for (int i = 0; i < mAccounts.size(); i++) {
+        if (mAccounts[i]->objectPath() == localUid)
+            return i;
+    }
+
+    return -1;
 }
 
 int AccountsModel::rowCount(const QModelIndex &parent) const

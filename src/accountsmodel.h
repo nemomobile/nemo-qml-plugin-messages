@@ -46,6 +46,7 @@ class AccountsModel : public QAbstractListModel
     // The Qt Components dialog expects the model to have a count
     // property, and won't show any items if it doesn't.
     Q_PROPERTY(int count READ count NOTIFY countChanged);
+    Q_PROPERTY(bool ready READ isReady NOTIFY readyChanged);
 
 public:
     enum Roles {
@@ -63,10 +64,19 @@ public:
         return data(index(row, 0), role);
     }
 
+    Q_INVOKABLE QVariant get(const QString &uid, int role = Qt::DisplayRole) const
+    {
+        return get(indexOfAccount(uid), role);
+    }
+
+    Q_INVOKABLE int indexOfAccount(const QString &localUid) const;
+
     int count() const { return rowCount(); }
+    bool isReady() const { return mReady; }
 
 signals:
     void countChanged();
+    void readyChanged();
 
 private slots:
     void accountManagerReady(Tp::PendingOperation *op);
@@ -75,6 +85,7 @@ private slots:
 private:
     Tp::AccountManagerPtr mAccountManager;
     QList<Tp::AccountPtr> mAccounts;
+    bool mReady;
 };
 
 #endif
