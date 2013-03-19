@@ -33,8 +33,6 @@
 #include "messagescontextprovider.h"
 #include <ContextProvider>
 
-#include <CommHistory/Group>
-
 MessagesContextProvider::MessagesContextProvider(QObject *parent)
     : QObject(parent), mCurrentConversation(0)
 {
@@ -56,7 +54,8 @@ void MessagesContextProvider::updateCurrentConversation(ConversationChannel *c)
 
     if (c) {
         QVariantList observed;
-        observed << c->localUid() << c->remoteUid() << CommHistory::Group::ChatTypeP2P;
+        // 0 is CommHistory::Group::ChatTypeP2P
+        observed << c->localUid() << c->remoteUid() << 0;
         propObservedConversation->setValue(observed);
     } else
         propObservedConversation->unsetValue();
