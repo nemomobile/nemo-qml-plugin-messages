@@ -34,30 +34,55 @@
 #include <ContextProvider>
 
 MessagesContextProvider::MessagesContextProvider(QObject *parent)
-    : QObject(parent), mCurrentConversation(0)
+    : QObject(parent), mObservedInbox(false)
 {
     ContextProvider::Service *cpService = new ContextProvider::Service(QDBusConnection::SessionBus,
             "org.nemomobile.qmlmessages.context", this);
+
     propObservedConversation = new ContextProvider::Property(*cpService, "Messaging.ObservedConversation",
             this);
     if (propObservedConversation && propObservedConversation->isSet())
         propObservedConversation->unsetValue();
+
+    propObservedInbox = new ContextProvider::Property(*cpService, "Messaging.ObservedInbox", this);
+    if (propObservedInbox && propObservedInbox->isSet())
+        propObservedInbox->unsetValue();
 }
 
-void MessagesContextProvider::updateCurrentConversation(ConversationChannel *c)
+void MessagesContextProvider::updateObservedGroups(const QVariantList &groups)
 {
-    if (c == mCurrentConversation)
+    mObservedGroups = groups;
+    emit observedGroupsChanged();
+
+    QVariantList observed;
+
+    foreach (const QVariant &value, groups) {
+        QObject *group = value.value<QObject*>();
+        if (!group)
+            continue;
+
+        QString localUid = group->property("localUid").toString();
+        QString remoteUid = group->property("remoteUids").toStringList().value(0);
+        if (!localUid.isEmpty() && !remoteUid.isEmpty()) {
+            // 0 is CommHistory::Group::ChatTypeP2P
+            observed << QVariant(QVariantList() << localUid << remoteUid << 0);
+        }
+    }
+
+    if (!observed.isEmpty())
+        propObservedConversation->setValue(observed);
+    else
+        propObservedConversation->unsetValue();
+}
+
+void MessagesContextProvider::setObservedInbox(bool observed)
+{
+    if (mObservedInbox == observed)
         return;
 
-    mCurrentConversation = c;
-    emit currentConversationChanged(c);
+    mObservedInbox = observed;
+    emit observedInboxChanged();
 
-    if (c) {
-        QVariantList observed;
-        // 0 is CommHistory::Group::ChatTypeP2P
-        observed << c->localUid() << c->remoteUid() << 0;
-        propObservedConversation->setValue(observed);
-    } else
-        propObservedConversation->unsetValue();
+    propObservedInbox->setValue(observed);
 }
 

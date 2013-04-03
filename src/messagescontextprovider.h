@@ -35,6 +35,7 @@
 #define MESSAGESCONTEXTPROVIDER_H
 
 #include <QObject>
+#include <QVariantList>
 #include "conversationchannel.h"
 
 namespace ContextProvider {
@@ -54,18 +55,25 @@ class MessagesContextProvider : public QObject
 public:
     explicit MessagesContextProvider(QObject *parent = 0);
 
-    Q_PROPERTY(ConversationChannel* currentConversation READ currentConversation WRITE updateCurrentConversation NOTIFY currentConversationChanged)
-    ConversationChannel *currentConversation() const { return mCurrentConversation; }
+    Q_PROPERTY(QVariantList observedGroups READ observedGroups WRITE updateObservedGroups NOTIFY observedGroupsChanged)
+    QVariantList observedGroups() const { return mObservedGroups; }
+
+    Q_PROPERTY(bool observedInbox READ observedInbox WRITE setObservedInbox NOTIFY observedInboxChanged)
+    bool observedInbox() const { return mObservedInbox; }
+    void setObservedInbox(bool observed);
 
 public slots:
-    void updateCurrentConversation(ConversationChannel *c);
+    void updateObservedGroups(const QVariantList &groups);
 
 signals:
-    void currentConversationChanged(ConversationChannel *current);
+    void observedGroupsChanged();
+    void observedInboxChanged();
 
 private:
-    ConversationChannel *mCurrentConversation;
     ContextProvider::Property *propObservedConversation;
+    ContextProvider::Property *propObservedInbox;
+    QVariantList mObservedGroups;
+    bool mObservedInbox;
 };
 
 #endif
