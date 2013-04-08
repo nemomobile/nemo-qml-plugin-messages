@@ -179,9 +179,9 @@ void ConversationChannel::channelReady()
     setState(Ready);
 
     if (!mPendingMessages.isEmpty())
-        qDebug() << Q_FUNC_INFO << "Sending buffered messages";
-    foreach (QString msg, mPendingMessages)
-        textChannel->send(msg);
+        qDebug() << Q_FUNC_INFO << "Sending" << mPendingMessages.size() << "buffered messages";
+    foreach (const Tp::MessagePartList &msg, mPendingMessages)
+        sendMessage(msg);
     mPendingMessages.clear();
 
     // Blindly acknowledge all messages, assuming commhistory handled them
@@ -209,13 +209,29 @@ void ConversationChannel::messageReceived(const Tp::ReceivedMessage &message)
     textChannel->acknowledge(QList<Tp::ReceivedMessage>() << message);
 }
 
-void ConversationChannel::sendMessage(const QString &text)
+void ConversationChannel::sendMessage(const QString &text, int eventId)
+{
+    Tp::MessagePart header;
+    if (eventId >= 0)
+        header.insert("x-commhistory-event-id", QDBusVariant(eventId));
+
+    Tp::MessagePart body;
+    body.insert("content-type", QDBusVariant(QLatin1String("text/plain")));
+    body.insert("content", QDBusVariant(text));
+
+    Tp::MessagePartList parts;
+    parts << header << body;
+
+    sendMessage(parts);
+}
+
+void ConversationChannel::sendMessage(const Tp::MessagePartList &parts)
 {
     if (mChannel.isNull() || !mChannel->isReady()) {
         Q_ASSERT(state() != Ready);
+        qDebug() << Q_FUNC_INFO << "Buffering message until channel is ready";
+        mPendingMessages.append(parts);
         ensureChannel();
-        qDebug() << Q_FUNC_INFO << "Buffering:" << text;
-        mPendingMessages.append(text);
         return;
     }
 
@@ -226,9 +242,7 @@ void ConversationChannel::sendMessage(const QString &text)
         return;
     }
 
-    // Note that buffered messages do not use this path. See channelReady.
-    qDebug() << Q_FUNC_INFO << text;
-    Tp::PendingSendMessage *msg = textChannel->send(text);
+    Tp::PendingSendMessage *msg = textChannel->send(parts);
 }
 
 void ConversationChannel::channelInvalidated(Tp::DBusProxy *proxy,

@@ -69,8 +69,10 @@ public:
     Q_INVOKABLE void ensureChannel();
     void setChannel(const Tp::ChannelPtr &channel);
 
+    void sendMessage(const Tp::MessagePartList &parts);
+
 public slots:
-    void sendMessage(const QString &text);
+    void sendMessage(const QString &text, int eventId = -1);
 
 signals:
     void stateChanged(int newState);
@@ -98,7 +100,7 @@ private:
     QString mLocalUid;
     QString mRemoteUid;
 
-    QList<QString> mPendingMessages;
+    Tp::MessagePartListList mPendingMessages;
 
     void setState(State newState);
     void start(Tp::PendingChannelRequest *request);
