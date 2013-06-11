@@ -1,8 +1,21 @@
 TARGET = nemomessages-internal
 PLUGIN_IMPORT_PATH = org/nemomobile/messages/internal
+TEMPLATE = lib
+CONFIG += qt plugin hide_symbols
 
 CONFIG += link_pkgconfig
-PKGCONFIG += TelepathyQt4 contextprovider-1.0
+
+equals(QT_MAJOR_VERSION, 4) {
+    PKGCONFIG += TelepathyQt4 contextprovider-1.0
+    DEFINES += HAVE_CONTEXTKIT
+    QT += declarative
+    target.path = $$[QT_INSTALL_IMPORTS]/$$PLUGIN_IMPORT_PATH
+}
+equals(QT_MAJOR_VERSION, 5) {
+    PKGCONFIG += TelepathyQt5 
+    QT += qml
+    target.path = $$[QT_INSTALL_QML]/$$PLUGIN_IMPORT_PATH
+} 
 
 SOURCES += plugin.cpp \
     src/accountsmodel.cpp \
@@ -15,14 +28,8 @@ HEADERS += src/accountsmodel.h \
     src/clienthandler.h \
     src/messagescontextprovider.h
 
-# do not edit below here, move this to a shared .pri?
-TEMPLATE = lib
-CONFIG += qt plugin hide_symbols
-QT += declarative
-
-target.path = $$[QT_INSTALL_IMPORTS]/$$PLUGIN_IMPORT_PATH
 INSTALLS += target
 
 qmldir.files += $$PWD/qmldir
-qmldir.path +=  $$[QT_INSTALL_IMPORTS]/$$$$PLUGIN_IMPORT_PATH
+qmldir.path +=  $$target.path
 INSTALLS += qmldir
