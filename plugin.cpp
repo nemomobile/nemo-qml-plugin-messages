@@ -31,9 +31,18 @@
  */
 
 #include <QtGlobal>
-#include <QtDeclarative>
-#include <QDeclarativeEngine>
-#include <QDeclarativeExtensionPlugin>
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+# include <QtDeclarative>
+# include <QDeclarativeEngine>
+# include <QDeclarativeExtensionPlugin>
+#else
+# include <QtQml>
+# include <QQmlEngine>
+# include <QQmlExtensionPlugin>
+# define QDeclarativeEngine QQmlEngine
+# define QDeclarativeExtensionPlugin QQmlExtensionPlugin
+#endif
 
 #include "src/accountsmodel.h"
 #include "src/conversationchannel.h"
@@ -42,6 +51,11 @@
 
 class Q_DECL_EXPORT NemoMessagesPlugin : public QDeclarativeExtensionPlugin
 {
+    Q_OBJECT
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    Q_PLUGIN_METADATA(IID "org.nemomobile.messages.internal")
+#endif
+
 public:
     virtual ~NemoMessagesPlugin() { }
 
@@ -62,5 +76,8 @@ public:
     }
 };
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
 Q_EXPORT_PLUGIN2(nemomessages, NemoMessagesPlugin);
+#endif
 
+#include "plugin.moc"
