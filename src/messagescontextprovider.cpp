@@ -31,11 +31,17 @@
  */
 
 #include "messagescontextprovider.h"
+
+/* ContextProvider is not available for Qt5. This will need to be refactored
+ * to use statefs or some other method along with commhistory-daemon. */
+#ifdef HAVE_CONTEXTKIT
 #include <ContextProvider>
+#endif
 
 MessagesContextProvider::MessagesContextProvider(QObject *parent)
     : QObject(parent), mObservedInbox(false)
 {
+#ifdef HAVE_CONTEXTKIT
     ContextProvider::Service *cpService = new ContextProvider::Service(QDBusConnection::SessionBus,
             "org.nemomobile.qmlmessages.context", this);
 
@@ -47,10 +53,12 @@ MessagesContextProvider::MessagesContextProvider(QObject *parent)
     propObservedInbox = new ContextProvider::Property(*cpService, "Messaging.ObservedInbox", this);
     if (propObservedInbox && propObservedInbox->isSet())
         propObservedInbox->unsetValue();
+#endif
 }
 
 void MessagesContextProvider::updateObservedGroups(const QVariantList &groups)
 {
+#ifdef HAVE_CONTEXTKIT
     mObservedGroups = groups;
     emit observedGroupsChanged();
 
@@ -73,10 +81,14 @@ void MessagesContextProvider::updateObservedGroups(const QVariantList &groups)
         propObservedConversation->setValue(observed);
     else
         propObservedConversation->unsetValue();
+#else
+    qWarning() << Q_FUNC_INFO << "Not implemented";
+#endif
 }
 
 void MessagesContextProvider::setObservedInbox(bool observed)
 {
+#ifdef HAVE_CONTEXTKIT
     if (mObservedInbox == observed)
         return;
 
@@ -84,5 +96,8 @@ void MessagesContextProvider::setObservedInbox(bool observed)
     emit observedInboxChanged();
 
     propObservedInbox->setValue(observed);
+#else
+    qWarning() << Q_FUNC_INFO << "Not implemented";
+#endif
 }
 

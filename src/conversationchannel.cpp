@@ -115,6 +115,13 @@ void ConversationChannel::setChannel(const Tp::ChannelPtr &c)
             SLOT(channelInvalidated(Tp::DBusProxy*,QString,QString)));
 
     setState(PendingReady);
+
+    /* setChannel may be called by the client handler before channelRequestSucceeded
+     * returns. Either path is equivalent. */
+    if (!mRequest.isNull()) {
+        mRequest.reset();
+        emit requestSucceeded();
+    }
 }
 
 void ConversationChannel::channelRequestCreated(const Tp::ChannelRequestPtr &r)
@@ -139,7 +146,8 @@ void ConversationChannel::channelRequestCreated(const Tp::ChannelRequestPtr &r)
 
 void ConversationChannel::channelRequestSucceeded(const Tp::ChannelPtr &channel)
 {
-    Q_ASSERT(state() == Requested);
+    if (state() > Requested)
+        return;
     Q_ASSERT(!mRequest.isNull());
     // Telepathy docs note that channel may be null if the dispatcher is too old.
     Q_ASSERT(!channel.isNull());
@@ -148,10 +156,7 @@ void ConversationChannel::channelRequestSucceeded(const Tp::ChannelPtr &channel)
         return;
     }
 
-    qDebug() << Q_FUNC_INFO;
     setChannel(channel);
-    mRequest.reset();
-    emit requestSucceeded();
 }
 
 void ConversationChannel::channelRequestFailed(const QString &errorName,

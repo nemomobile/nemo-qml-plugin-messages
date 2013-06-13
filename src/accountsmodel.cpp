@@ -42,16 +42,23 @@ Q_DECLARE_METATYPE(Tp::AccountPtr)
 AccountsModel::AccountsModel(QObject *parent)
     : QAbstractListModel(parent), mReady(false)
 {
-    QHash<int,QByteArray> roles;
-    roles[Qt::DisplayRole] = "name";
-    roles[AccountPtrRole] = "accountPtr";
-    roles[AccountUidRole] = "accountUid";
-    setRoleNames(roles);
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+    setRoleNames(roleNames());
+#endif
 
     mAccountManager = Tp::AccountManager::create(Tp::AccountFactory::create(QDBusConnection::sessionBus(),
                 Tp::Account::FeatureCore));
     connect(mAccountManager->becomeReady(), SIGNAL(finished(Tp::PendingOperation*)), SLOT(accountManagerReady(Tp::PendingOperation*)));
     connect(mAccountManager.data(), SIGNAL(newAccount(Tp::AccountPtr)), SLOT(newAccount(Tp::AccountPtr)));
+}
+
+QHash<int,QByteArray> AccountsModel::roleNames() const
+{
+    QHash<int,QByteArray> roles;
+    roles[Qt::DisplayRole] = "name";
+    roles[AccountPtrRole] = "accountPtr";
+    roles[AccountUidRole] = "accountUid";
+    return roles;
 }
 
 void AccountsModel::accountManagerReady(Tp::PendingOperation *op)
