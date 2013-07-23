@@ -16,7 +16,6 @@ PkgConfigBR:
     - QtDeclarative
     - QtGui
     - TelepathyQt4
-    - contextprovider-1.0
 
 Files:
     - "%{_libdir}/qt4/imports/org/nemomobile/messages/internal/*"

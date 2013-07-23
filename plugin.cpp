@@ -47,7 +47,6 @@
 #include "src/accountsmodel.h"
 #include "src/conversationchannel.h"
 #include "src/clienthandler.h"
-#include "src/messagescontextprovider.h"
 
 class Q_DECL_EXPORT NemoMessagesPlugin : public QDeclarativeExtensionPlugin
 {
@@ -72,7 +71,6 @@ public:
         qmlRegisterUncreatableType<ConversationChannel>(uri, 1, 0, "ConversationChannel",
                 QLatin1String("Must be created via TelepathyChannelManager"));
         qmlRegisterType<ClientHandler>(uri, 1, 0, "TelepathyChannelManager");
-        qmlRegisterType<MessagesContextProvider>(uri, 1, 0, "MessagesContextProvider");
     }
 };
 

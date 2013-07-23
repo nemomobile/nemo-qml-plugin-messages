@@ -6,8 +6,7 @@ CONFIG += qt plugin hide_symbols
 CONFIG += link_pkgconfig
 
 equals(QT_MAJOR_VERSION, 4) {
-    PKGCONFIG += TelepathyQt4 contextprovider-1.0
-    DEFINES += HAVE_CONTEXTKIT
+    PKGCONFIG += TelepathyQt4
     QT += declarative
     target.path = $$[QT_INSTALL_IMPORTS]/$$PLUGIN_IMPORT_PATH
 }
@@ -20,13 +19,11 @@ equals(QT_MAJOR_VERSION, 5) {
 SOURCES += plugin.cpp \
     src/accountsmodel.cpp \
     src/conversationchannel.cpp \
-    src/clienthandler.cpp \
-    src/messagescontextprovider.cpp
+    src/clienthandler.cpp
 
 HEADERS += src/accountsmodel.h \
     src/conversationchannel.h \
-    src/clienthandler.h \
-    src/messagescontextprovider.h
+    src/clienthandler.h
 
 INSTALLS += target
 
