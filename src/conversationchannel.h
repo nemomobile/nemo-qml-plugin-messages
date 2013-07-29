@@ -78,6 +78,7 @@ signals:
     void stateChanged(int newState);
     void requestSucceeded();
     void requestFailed(const QString &errorName, const QString &errorMessage);
+    void sendingFailed(int eventId);
 
 private slots:
     void accountReadyForChannel(Tp::PendingOperation *op);
@@ -89,6 +90,8 @@ private slots:
     void messageReceived(const Tp::ReceivedMessage &message);
 
     void channelInvalidated(Tp::DBusProxy *proxy, const QString &errorName, const QString &errorMessage);
+
+    void sendingFinished(Tp::PendingOperation *op);
 
 private:
     Tp::PendingChannelRequest *mPendingRequest;
@@ -104,6 +107,8 @@ private:
 
     void setState(State newState);
     void start(Tp::PendingChannelRequest *request);
+
+    void sendingFailed(const Tp::MessagePartList &parts);
 };
 
 #endif
