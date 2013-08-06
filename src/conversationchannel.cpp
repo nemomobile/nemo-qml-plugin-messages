@@ -201,6 +201,13 @@ void ConversationChannel::setState(State newState)
 
     mState = newState;
     emit stateChanged(newState);
+
+    if (mState == Error && !mPendingMessages.isEmpty()) {
+        QList<Tp::MessagePartList> failed = mPendingMessages;
+        mPendingMessages.clear();
+        foreach (const Tp::MessagePartList &msg, failed)
+            sendingFailed(msg);
+    }
 }
 
 void ConversationChannel::messageReceived(const Tp::ReceivedMessage &message)
@@ -248,6 +255,25 @@ void ConversationChannel::sendMessage(const Tp::MessagePartList &parts)
     }
 
     Tp::PendingSendMessage *msg = textChannel->send(parts);
+    connect(msg, SIGNAL(finished(Tp::PendingOperation*)), SLOT(sendingFinished(Tp::PendingOperation*)));
+}
+
+void ConversationChannel::sendingFinished(Tp::PendingOperation *op)
+{
+    if (op->isError()) {
+        Tp::Message msg = static_cast<Tp::PendingSendMessage*>(op)->message();
+        emit sendingFailed(msg.parts());
+    }
+}
+
+void ConversationChannel::sendingFailed(const Tp::MessagePartList &msg)
+{
+    bool hasId = false;
+    int eventId = msg.at(0).value("x-commhistory-event-id").variant().toInt(&hasId);
+    if (!hasId)
+        eventId = -1;
+
+    emit sendingFailed(eventId);
 }
 
 void ConversationChannel::channelInvalidated(Tp::DBusProxy *proxy,
