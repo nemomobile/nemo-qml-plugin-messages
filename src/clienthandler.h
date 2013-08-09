@@ -42,9 +42,18 @@ class ClientHandler : public QObject, public Tp::AbstractClientHandler
 {
     Q_OBJECT
 
+    /* If defined, this client will be registered as a handler for Telepathy text channels.
+     * This should generally only be done by a primary messaging client that wishes to see
+     * and be responsible for new incoming channels; it's not necessary to establish new
+     * channels via getConversation. */
+    Q_PROPERTY(QString handlerName READ handlerName WRITE setHandlerName NOTIFY handlerNameChanged)
+
 public:
     ClientHandler();
     virtual ~ClientHandler();
+
+    QString handlerName() const;
+    void setHandlerName(const QString &handlerName);
 
     Q_INVOKABLE ConversationChannel *getConversation(const QString &localUid, const QString &remoteUid);
 
@@ -53,10 +62,15 @@ public:
                                 const Tp::ConnectionPtr &connection, const QList<Tp::ChannelPtr> &channels,
                                 const QList<Tp::ChannelRequestPtr> &requestsSatisfied, const QDateTime &userActionTime,
                                 const HandlerInfo &handlerInfo);
+
+signals:
+    void handlerNameChanged();
+
 private slots:
     void channelDestroyed(QObject *obj);
 
 private:
+    QString m_handlerName;
     Tp::ClientRegistrarPtr registrar;
     QList<ConversationChannel*> channels;
 };

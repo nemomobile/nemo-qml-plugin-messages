@@ -43,14 +43,31 @@ using namespace Tp;
 ClientHandler::ClientHandler()
     : AbstractClientHandler(ChannelClassSpec::textChat())
 {
-    const QDBusConnection &dbus = QDBusConnection::sessionBus();
-    registrar = ClientRegistrar::create(dbus);
-    AbstractClientPtr handler = AbstractClientPtr(this);
-    registrar->registerClient(handler, "qmlmessages");
 }
 
 ClientHandler::~ClientHandler()
 {
+}
+
+QString ClientHandler::handlerName() const
+{
+    return m_handlerName;
+}
+
+void ClientHandler::setHandlerName(const QString &name)
+{
+    if (name.isEmpty() || !m_handlerName.isEmpty())
+        return;
+
+    m_handlerName = name;
+
+    const QDBusConnection &dbus = QDBusConnection::sessionBus();
+    if (registrar.isNull())
+        registrar = ClientRegistrar::create(dbus);
+    AbstractClientPtr handler = AbstractClientPtr(this);
+    registrar->registerClient(handler, m_handlerName);
+
+    emit handlerNameChanged();
 }
 
 ConversationChannel *ClientHandler::getConversation(const QString &localUid, const QString &remoteUid)
