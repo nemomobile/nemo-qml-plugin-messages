@@ -44,6 +44,10 @@
 # define QDeclarativeExtensionPlugin QQmlExtensionPlugin
 #endif
 
+#include <TelepathyQt/Constants>
+#include <TelepathyQt/Debug>
+#include <TelepathyQt/Types>
+
 #include "src/accountsmodel.h"
 #include "src/conversationchannel.h"
 #include "src/clienthandler.h"
@@ -66,6 +70,10 @@ public:
     void registerTypes(const char *uri)
     {
         Q_ASSERT(uri == QLatin1String("org.nemomobile.messages.internal"));
+
+        // Set up Telepathy
+        Tp::registerTypes();
+        Tp::enableWarnings(true);
 
         qmlRegisterType<AccountsModel>(uri, 1, 0, "TelepathyAccountsModel");
         qmlRegisterUncreatableType<ConversationChannel>(uri, 1, 0, "ConversationChannel",
