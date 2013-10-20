@@ -36,6 +36,7 @@
 #include <TelepathyQt/AccountManager>
 
 class ConversationChannel;
+class DeclarativeAccount;
 
 class AccountsModel : public QAbstractListModel
 {
@@ -71,6 +72,8 @@ public:
     }
 
     Q_INVOKABLE int indexOfAccount(const QString &localUid) const;
+
+    Q_INVOKABLE DeclarativeAccount *getAccount(const QString &localUid) const;
 
     int count() const { return rowCount(); }
     bool isReady() const { return mReady; }

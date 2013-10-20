@@ -19,11 +19,13 @@ equals(QT_MAJOR_VERSION, 5) {
 SOURCES += plugin.cpp \
     src/accountsmodel.cpp \
     src/conversationchannel.cpp \
-    src/clienthandler.cpp
+    src/clienthandler.cpp \
+    src/declarativeaccount.cpp
 
 HEADERS += src/accountsmodel.h \
     src/conversationchannel.h \
-    src/clienthandler.h
+    src/clienthandler.h \
+    src/declarativeaccount.h
 
 INSTALLS += target
 
