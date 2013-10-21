@@ -30,6 +30,7 @@
 
 #include "accountsmodel.h"
 #include "conversationchannel.h"
+#include "declarativeaccount.h"
 #include <QDBusConnection>
 #include <QDebug>
 
@@ -86,6 +87,15 @@ int AccountsModel::indexOfAccount(const QString &localUid) const
     }
 
     return -1;
+}
+
+DeclarativeAccount *AccountsModel::getAccount(const QString &uid) const
+{
+    int index = indexOfAccount(uid);
+    if (index < 0)
+        return 0;
+
+    return new DeclarativeAccount(mAccounts[index]);
 }
 
 int AccountsModel::rowCount(const QModelIndex &parent) const
