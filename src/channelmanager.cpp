@@ -28,8 +28,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "clienthandler.h"
+#include "channelmanager.h"
 #include "conversationchannel.h"
+#include <QPointer>
 
 #include <TelepathyQt/ChannelClassSpec>
 #include <TelepathyQt/ReceivedMessage>
@@ -40,21 +41,39 @@
 
 using namespace Tp;
 
-ClientHandler::ClientHandler()
-    : AbstractClientHandler(ChannelClassSpec::textChat())
+class TpClientHandler : public Tp::AbstractClientHandler
+{
+public:
+    QPointer<ChannelManager> manager;
+
+    TpClientHandler(ChannelManager *manager)
+        : AbstractClientHandler(ChannelClassSpec::textChat())
+        , manager(manager)
+    {
+    }
+
+    virtual bool bypassApproval() const;
+    virtual void handleChannels(const Tp::MethodInvocationContextPtr<> &context, const Tp::AccountPtr &account,
+                                const Tp::ConnectionPtr &connection, const QList<Tp::ChannelPtr> &channels,
+                                const QList<Tp::ChannelRequestPtr> &requestsSatisfied, const QDateTime &userActionTime,
+                                const HandlerInfo &handlerInfo);
+};
+
+ChannelManager::ChannelManager(QObject *parent)
+    : QObject(parent)
 {
 }
 
-ClientHandler::~ClientHandler()
+ChannelManager::~ChannelManager()
 {
 }
 
-QString ClientHandler::handlerName() const
+QString ChannelManager::handlerName() const
 {
     return m_handlerName;
 }
 
-void ClientHandler::setHandlerName(const QString &name)
+void ChannelManager::setHandlerName(const QString &name)
 {
     if (name.isEmpty() || !m_handlerName.isEmpty())
         return;
@@ -64,13 +83,13 @@ void ClientHandler::setHandlerName(const QString &name)
     const QDBusConnection &dbus = QDBusConnection::sessionBus();
     if (registrar.isNull())
         registrar = ClientRegistrar::create(dbus);
-    AbstractClientPtr handler = AbstractClientPtr(this);
+    handler = AbstractClientPtr(new TpClientHandler(this));
     registrar->registerClient(handler, m_handlerName);
 
     emit handlerNameChanged();
 }
 
-ConversationChannel *ClientHandler::getConversation(const QString &localUid, const QString &remoteUid)
+ConversationChannel *ChannelManager::getConversation(const QString &localUid, const QString &remoteUid)
 {
     foreach (ConversationChannel *channel, channels) {
         if (channel->localUid() == localUid && channel->remoteUid() == remoteUid)
@@ -84,25 +103,30 @@ ConversationChannel *ClientHandler::getConversation(const QString &localUid, con
     return channel;
 }
 
-void ClientHandler::channelDestroyed(QObject *obj)
+void ChannelManager::channelDestroyed(QObject *obj)
 {
     channels.removeOne(static_cast<ConversationChannel*>(obj));
 }
 
-bool ClientHandler::bypassApproval() const
+bool TpClientHandler::bypassApproval() const
 {
     return true;
 }
 
-void ClientHandler::handleChannels(const MethodInvocationContextPtr<> &context, const AccountPtr &account,
-                                   const ConnectionPtr &connection, const QList<ChannelPtr> &channels,
-                                   const QList<ChannelRequestPtr> &requestsSatisfied, const QDateTime &userActionTime,
-                                   const HandlerInfo &handlerInfo)
+void TpClientHandler::handleChannels(const MethodInvocationContextPtr<> &context, const AccountPtr &account,
+                                     const ConnectionPtr &connection, const QList<ChannelPtr> &channels,
+                                     const QList<ChannelRequestPtr> &requestsSatisfied, const QDateTime &userActionTime,
+                                     const HandlerInfo &handlerInfo)
 {
     Q_UNUSED(connection);
     Q_UNUSED(requestsSatisfied);
     Q_UNUSED(userActionTime);
     Q_UNUSED(handlerInfo);
+
+    if (manager.isNull()) {
+        context->setFinished();
+        return;
+    }
 
     foreach (const ChannelPtr &channel, channels) {
         QVariantMap properties = channel->immutableProperties();
@@ -113,7 +137,7 @@ void ClientHandler::handleChannels(const MethodInvocationContextPtr<> &context, 
             continue;
         }
 
-        ConversationChannel *c = getConversation(account->objectPath(), targetId);
+        ConversationChannel *c = manager->getConversation(account->objectPath(), targetId);
         if (!c) {
             qWarning() << "handleChannels cannot create ConversationChannel";
             continue;

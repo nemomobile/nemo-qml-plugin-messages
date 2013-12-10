@@ -32,13 +32,14 @@
 #define CLIENTHANDLER_H
 
 #include <QObject>
-#include <TelepathyQt/AbstractClientHandler>
-#include <TelepathyQt/PendingChannelRequest>
 #include "conversationchannel.h"
+
+#include <TelepathyQt/AbstractClient>
+#include <TelepathyQt/ClientRegistrar>
 
 class GroupManager;
 
-class ClientHandler : public QObject, public Tp::AbstractClientHandler
+class ChannelManager : public QObject
 {
     Q_OBJECT
 
@@ -49,19 +50,13 @@ class ClientHandler : public QObject, public Tp::AbstractClientHandler
     Q_PROPERTY(QString handlerName READ handlerName WRITE setHandlerName NOTIFY handlerNameChanged)
 
 public:
-    ClientHandler();
-    virtual ~ClientHandler();
+    ChannelManager(QObject *parent = 0);
+    virtual ~ChannelManager();
 
     QString handlerName() const;
     void setHandlerName(const QString &handlerName);
 
     Q_INVOKABLE ConversationChannel *getConversation(const QString &localUid, const QString &remoteUid);
-
-    virtual bool bypassApproval() const;
-    virtual void handleChannels(const Tp::MethodInvocationContextPtr<> &context, const Tp::AccountPtr &account,
-                                const Tp::ConnectionPtr &connection, const QList<Tp::ChannelPtr> &channels,
-                                const QList<Tp::ChannelRequestPtr> &requestsSatisfied, const QDateTime &userActionTime,
-                                const HandlerInfo &handlerInfo);
 
 signals:
     void handlerNameChanged();
@@ -72,6 +67,7 @@ private slots:
 private:
     QString m_handlerName;
     Tp::ClientRegistrarPtr registrar;
+    Tp::AbstractClientPtr handler;
     QList<ConversationChannel*> channels;
 };
 

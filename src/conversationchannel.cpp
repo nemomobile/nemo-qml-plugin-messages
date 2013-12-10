@@ -30,7 +30,7 @@
  */
 
 #include "conversationchannel.h"
-#include "clienthandler.h"
+#include "channelmanager.h"
 
 #include <TelepathyQt/ChannelRequest>
 #include <TelepathyQt/TextChannel>
