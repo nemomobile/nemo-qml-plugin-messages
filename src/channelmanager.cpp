@@ -30,6 +30,7 @@
 
 #include "channelmanager.h"
 #include "conversationchannel.h"
+#include <QPointer>
 
 #include <TelepathyQt/ChannelClassSpec>
 #include <TelepathyQt/ReceivedMessage>
@@ -40,8 +41,26 @@
 
 using namespace Tp;
 
-ChannelManager::ChannelManager()
-    : AbstractClientHandler(ChannelClassSpec::textChat())
+class TpClientHandler : public Tp::AbstractClientHandler
+{
+public:
+    QPointer<ChannelManager> manager;
+
+    TpClientHandler(ChannelManager *manager)
+        : AbstractClientHandler(ChannelClassSpec::textChat())
+        , manager(manager)
+    {
+    }
+
+    virtual bool bypassApproval() const;
+    virtual void handleChannels(const Tp::MethodInvocationContextPtr<> &context, const Tp::AccountPtr &account,
+                                const Tp::ConnectionPtr &connection, const QList<Tp::ChannelPtr> &channels,
+                                const QList<Tp::ChannelRequestPtr> &requestsSatisfied, const QDateTime &userActionTime,
+                                const HandlerInfo &handlerInfo);
+};
+
+ChannelManager::ChannelManager(QObject *parent)
+    : QObject(parent)
 {
 }
 
@@ -64,7 +83,7 @@ void ChannelManager::setHandlerName(const QString &name)
     const QDBusConnection &dbus = QDBusConnection::sessionBus();
     if (registrar.isNull())
         registrar = ClientRegistrar::create(dbus);
-    AbstractClientPtr handler = AbstractClientPtr(this);
+    handler = AbstractClientPtr(new TpClientHandler(this));
     registrar->registerClient(handler, m_handlerName);
 
     emit handlerNameChanged();
@@ -89,20 +108,25 @@ void ChannelManager::channelDestroyed(QObject *obj)
     channels.removeOne(static_cast<ConversationChannel*>(obj));
 }
 
-bool ChannelManager::bypassApproval() const
+bool TpClientHandler::bypassApproval() const
 {
     return true;
 }
 
-void ChannelManager::handleChannels(const MethodInvocationContextPtr<> &context, const AccountPtr &account,
-                                   const ConnectionPtr &connection, const QList<ChannelPtr> &channels,
-                                   const QList<ChannelRequestPtr> &requestsSatisfied, const QDateTime &userActionTime,
-                                   const HandlerInfo &handlerInfo)
+void TpClientHandler::handleChannels(const MethodInvocationContextPtr<> &context, const AccountPtr &account,
+                                     const ConnectionPtr &connection, const QList<ChannelPtr> &channels,
+                                     const QList<ChannelRequestPtr> &requestsSatisfied, const QDateTime &userActionTime,
+                                     const HandlerInfo &handlerInfo)
 {
     Q_UNUSED(connection);
     Q_UNUSED(requestsSatisfied);
     Q_UNUSED(userActionTime);
     Q_UNUSED(handlerInfo);
+
+    if (manager.isNull()) {
+        context->setFinished();
+        return;
+    }
 
     foreach (const ChannelPtr &channel, channels) {
         QVariantMap properties = channel->immutableProperties();
@@ -113,7 +137,7 @@ void ChannelManager::handleChannels(const MethodInvocationContextPtr<> &context,
             continue;
         }
 
-        ConversationChannel *c = getConversation(account->objectPath(), targetId);
+        ConversationChannel *c = manager->getConversation(account->objectPath(), targetId);
         if (!c) {
             qWarning() << "handleChannels cannot create ConversationChannel";
             continue;
