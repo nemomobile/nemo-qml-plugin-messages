@@ -38,7 +38,7 @@
 
 class GroupManager;
 
-class ClientHandler : public QObject, public Tp::AbstractClientHandler
+class ChannelManager : public QObject, public Tp::AbstractClientHandler
 {
     Q_OBJECT
 
@@ -49,8 +49,8 @@ class ClientHandler : public QObject, public Tp::AbstractClientHandler
     Q_PROPERTY(QString handlerName READ handlerName WRITE setHandlerName NOTIFY handlerNameChanged)
 
 public:
-    ClientHandler();
-    virtual ~ClientHandler();
+    ChannelManager();
+    virtual ~ChannelManager();
 
     QString handlerName() const;
     void setHandlerName(const QString &handlerName);

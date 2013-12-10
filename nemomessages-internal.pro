@@ -11,20 +11,20 @@ equals(QT_MAJOR_VERSION, 4) {
     target.path = $$[QT_INSTALL_IMPORTS]/$$PLUGIN_IMPORT_PATH
 }
 equals(QT_MAJOR_VERSION, 5) {
-    PKGCONFIG += TelepathyQt5 
+    PKGCONFIG += TelepathyQt5
     QT += qml
     target.path = $$[QT_INSTALL_QML]/$$PLUGIN_IMPORT_PATH
-} 
+}
 
 SOURCES += plugin.cpp \
     src/accountsmodel.cpp \
     src/conversationchannel.cpp \
-    src/clienthandler.cpp \
+    src/channelmanager.cpp \
     src/declarativeaccount.cpp
 
 HEADERS += src/accountsmodel.h \
     src/conversationchannel.h \
-    src/clienthandler.h \
+    src/channelmanager.h \
     src/declarativeaccount.h
 
 INSTALLS += target

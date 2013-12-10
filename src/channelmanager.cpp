@@ -28,7 +28,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "clienthandler.h"
+#include "channelmanager.h"
 #include "conversationchannel.h"
 
 #include <TelepathyQt/ChannelClassSpec>
@@ -40,21 +40,21 @@
 
 using namespace Tp;
 
-ClientHandler::ClientHandler()
+ChannelManager::ChannelManager()
     : AbstractClientHandler(ChannelClassSpec::textChat())
 {
 }
 
-ClientHandler::~ClientHandler()
+ChannelManager::~ChannelManager()
 {
 }
 
-QString ClientHandler::handlerName() const
+QString ChannelManager::handlerName() const
 {
     return m_handlerName;
 }
 
-void ClientHandler::setHandlerName(const QString &name)
+void ChannelManager::setHandlerName(const QString &name)
 {
     if (name.isEmpty() || !m_handlerName.isEmpty())
         return;
@@ -70,7 +70,7 @@ void ClientHandler::setHandlerName(const QString &name)
     emit handlerNameChanged();
 }
 
-ConversationChannel *ClientHandler::getConversation(const QString &localUid, const QString &remoteUid)
+ConversationChannel *ChannelManager::getConversation(const QString &localUid, const QString &remoteUid)
 {
     foreach (ConversationChannel *channel, channels) {
         if (channel->localUid() == localUid && channel->remoteUid() == remoteUid)
@@ -84,17 +84,17 @@ ConversationChannel *ClientHandler::getConversation(const QString &localUid, con
     return channel;
 }
 
-void ClientHandler::channelDestroyed(QObject *obj)
+void ChannelManager::channelDestroyed(QObject *obj)
 {
     channels.removeOne(static_cast<ConversationChannel*>(obj));
 }
 
-bool ClientHandler::bypassApproval() const
+bool ChannelManager::bypassApproval() const
 {
     return true;
 }
 
-void ClientHandler::handleChannels(const MethodInvocationContextPtr<> &context, const AccountPtr &account,
+void ChannelManager::handleChannels(const MethodInvocationContextPtr<> &context, const AccountPtr &account,
                                    const ConnectionPtr &connection, const QList<ChannelPtr> &channels,
                                    const QList<ChannelRequestPtr> &requestsSatisfied, const QDateTime &userActionTime,
                                    const HandlerInfo &handlerInfo)
