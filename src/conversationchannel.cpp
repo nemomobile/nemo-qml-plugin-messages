@@ -173,8 +173,6 @@ void ConversationChannel::channelRequestFailed(const QString &errorName,
 
 void ConversationChannel::channelReady()
 {
-    Q_ASSERT(state() == PendingReady);
-    Q_ASSERT(!mChannel.isNull());
     if (state() != PendingReady || mChannel.isNull())
         return;
 
