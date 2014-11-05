@@ -60,6 +60,7 @@ QHash<int,QByteArray> AccountsModel::roleNames() const
 
 void AccountsModel::accountManagerReady(Tp::PendingOperation *op)
 {
+    Q_UNUSED(op)
     foreach (const Tp::AccountPtr &account, mAccountManager->allAccounts())
         newAccount(account);
     mReady = true;
