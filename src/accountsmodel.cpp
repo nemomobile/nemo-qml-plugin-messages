@@ -43,10 +43,6 @@ Q_DECLARE_METATYPE(Tp::AccountPtr)
 AccountsModel::AccountsModel(QObject *parent)
     : QAbstractListModel(parent), mReady(false)
 {
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    setRoleNames(roleNames());
-#endif
-
     mAccountManager = Tp::AccountManager::create(Tp::AccountFactory::create(QDBusConnection::sessionBus(),
                 Tp::Account::FeatureCore));
     connect(mAccountManager->becomeReady(), SIGNAL(finished(Tp::PendingOperation*)), SLOT(accountManagerReady(Tp::PendingOperation*)));

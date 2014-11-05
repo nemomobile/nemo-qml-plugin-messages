@@ -32,17 +32,9 @@
 
 #include <QtGlobal>
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-# include <QtDeclarative>
-# include <QDeclarativeEngine>
-# include <QDeclarativeExtensionPlugin>
-#else
-# include <QtQml>
-# include <QQmlEngine>
-# include <QQmlExtensionPlugin>
-# define QDeclarativeEngine QQmlEngine
-# define QDeclarativeExtensionPlugin QQmlExtensionPlugin
-#endif
+#include <QtQml>
+#include <QQmlEngine>
+#include <QQmlExtensionPlugin>
 
 #include <TelepathyQt/Constants>
 #include <TelepathyQt/Debug>
@@ -53,18 +45,18 @@
 #include "src/channelmanager.h"
 #include "src/declarativeaccount.h"
 
-class Q_DECL_EXPORT NemoMessagesPlugin : public QDeclarativeExtensionPlugin
+class Q_DECL_EXPORT NemoMessagesPlugin : public QQmlExtensionPlugin
 {
     Q_OBJECT
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     Q_PLUGIN_METADATA(IID "org.nemomobile.messages.internal")
-#endif
 
 public:
     virtual ~NemoMessagesPlugin() { }
 
-    void initializeEngine(QDeclarativeEngine *engine, const char *uri)
+    void initializeEngine(QQmlEngine *engine, const char *uri)
     {
+        Q_UNUSED(engine)
+        Q_UNUSED(uri)
         Q_ASSERT(uri == QLatin1String("org.nemomobile.messages.internal"));
     }
 
@@ -84,9 +76,5 @@ public:
                 QLatin1String("Create via AccountsModel"));
     }
 };
-
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-Q_EXPORT_PLUGIN2(nemomessages, NemoMessagesPlugin);
-#endif
 
 #include "plugin.moc"
