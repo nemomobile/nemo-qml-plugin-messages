@@ -46,8 +46,8 @@ class AccountsModel : public QAbstractListModel
     // Hack necessary for SelectionDialog in AccountSelector.qml.
     // The Qt Components dialog expects the model to have a count
     // property, and won't show any items if it doesn't.
-    Q_PROPERTY(int count READ count NOTIFY countChanged);
-    Q_PROPERTY(bool ready READ isReady NOTIFY readyChanged);
+    Q_PROPERTY(int count READ count NOTIFY countChanged)
+    Q_PROPERTY(bool ready READ isReady NOTIFY readyChanged)
 
 public:
     enum Roles {
