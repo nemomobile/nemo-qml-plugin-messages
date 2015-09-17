@@ -53,7 +53,9 @@ void ConversationChannel::ensureChannel()
     if (!mChannel.isNull() || mPendingRequest || !mRequest.isNull())
         return;
 
-    mAccount = Tp::Account::create(TP_QT_ACCOUNT_MANAGER_BUS_NAME, mLocalUid);
+    if (!mAccount) {
+        mAccount = Tp::Account::create(TP_QT_ACCOUNT_MANAGER_BUS_NAME, mLocalUid);
+    }
     if (!mAccount) {
         qWarning() << "ConversationChannel::ensureChannel no account for" << mLocalUid;
         setState(Error);
@@ -182,7 +184,7 @@ void ConversationChannel::channelReady()
     setState(Ready);
 
     if (!mPendingMessages.isEmpty())
-        qDebug() << Q_FUNC_INFO << "Sending" << mPendingMessages.size() << "buffered messages";
+        qDebug() << Q_FUNC_INFO << "Sending" << mPendingMessages.size() << "buffered messages to:" << mRemoteUid;
     foreach (const Tp::MessagePartList &msg, mPendingMessages)
         sendMessage(msg);
     mPendingMessages.clear();
@@ -239,9 +241,11 @@ void ConversationChannel::sendMessage(const Tp::MessagePartList &parts)
 {
     if (mChannel.isNull() || !mChannel->isReady()) {
         Q_ASSERT(state() != Ready);
-        qDebug() << Q_FUNC_INFO << "Buffering message until channel is ready";
+        qDebug() << Q_FUNC_INFO << "Buffering message until channel is ready for:" << mRemoteUid;
         mPendingMessages.append(parts);
-        ensureChannel();
+        if (mPendingMessages.count() == 1) {
+            ensureChannel();
+        }
         return;
     }
 
