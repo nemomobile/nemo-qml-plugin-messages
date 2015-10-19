@@ -1,5 +1,2 @@
-This QML plugin implements logic for the qmlmessages application and other UI
-implementations. It is not meant to be used by any other applications, or by
-more than one process simultaniously. It is installed as org.nemomobile.messages.internal.
-
-For external API, see nemo-qml-plugins, which provides org.nemomobile.messages.
+This project has migrated to https://git.merproject.org/mer-core/nemo-qml-plugin-messages
+as part of the Mer/Nemo merge work
